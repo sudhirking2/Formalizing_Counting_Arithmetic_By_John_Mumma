@@ -1,4 +1,4 @@
--- Author: Sudhir Murthy  
+-- Author: Sudhir Murthy
 -- Acknowledgements: I thank Eric Reck for his encouragement in this project. I would also like to thank John Mumma for his talk on Counting Arithmetic and his permission to attempt to formalize his theory in Lean4.
 import Mathlib
 --set_option trace.Meta.synthInstance true
@@ -63,8 +63,6 @@ class CountingArithmetic (I S : Type u)
     (¬ ¬ ∃ i : I, i ∈ σ) ∧
     (C σ' < C σ)) →
     ∃ i j k : I, i ≠ j ∧ pr i k ∈ δ ∧ pr j k ∈ δ
-
-
 
 
 variable {I S : Type u} [CountingArithmetic I S]
@@ -203,7 +201,7 @@ lemma C3' : ∀ δ σ σ' : S,
   intro δ σ σ' h
   exact C3 δ σ σ' ⟨h.1.1, h.1.2, h.2.1, h.2.2⟩
 
-lemma pair_left_injective : ∀ i j k l : I, ⟪i, j⟫ = ⟪k, l⟫ → i = k := by
+theorem pair_left_injective : ∀ i j k l : I, ⟪i, j⟫ = ⟪k, l⟫ → i = k := by
   intro i j k l h
   rcases I3 (S:=S) i k with hik | rfl | hki
   · exfalso
@@ -217,7 +215,7 @@ lemma pair_left_injective : ∀ i j k l : I, ⟪i, j⟫ = ⟪k, l⟫ → i = k :
     apply I1 (I:=I) (S:=S) ⟪i, j⟫
     exact this
 
-lemma pair_right_injective : ∀ i j k l : I, ⟪i, j⟫ = ⟪k, l⟫ → j = l := by
+theorem pair_right_injective : ∀ i j k l : I, ⟪i, j⟫ = ⟪k, l⟫ → j = l := by
   intro i j k l h
   have hik : i = k := pair_left_injective (I := I) (S := S) i j k l h
   subst hik
@@ -237,7 +235,7 @@ lemma pair_right_injective : ∀ i j k l : I, ⟪i, j⟫ = ⟪k, l⟫ → j = l 
 def inverse_bij {δ σ σ' : S} (_ : isBij (I:=I) δ σ σ') : S := by
   refine (S6 (fun i => ∃ j k : I, i = ⟪j, k⟫ ∧ ⟪k, j⟫ ∈ δ) (σ' * σ)).1
 
-lemma inverse_bij_spec {δ σ σ' : S} (h : isBij (I:=I) δ σ σ') :
+theorem inverse_bij_spec {δ σ σ' : S} (h : isBij (I:=I) δ σ σ') :
   ∀ i : I, i ∈ inverse_bij h ↔ ∃ j k : I, i = ⟪j, k⟫ ∧ ⟪k, j⟫ ∈ δ := by
   intro i
   unfold inverse_bij
@@ -266,8 +264,7 @@ lemma inverse_bij_spec {δ σ σ' : S} (h : isBij (I:=I) δ σ σ') :
       exact (S5 σ' σ i).mpr ⟨j, k, hj, hk, hij⟩
     · exact ⟨j, k, hij, hkjδ⟩
 
-
-lemma inverse_bij_isFunc (δ σ σ' : S) (h: isBij (I:=I) δ σ σ') :
+theorem inverse_bij_isFunc (δ σ σ' : S) (h: isBij (I:=I) δ σ σ') :
   isFunc (I:=I) (inverse_bij h) σ' σ := by
   unfold isFunc
   constructor
@@ -312,7 +309,6 @@ lemma inverse_bij_isFunc (δ σ σ' : S) (h: isBij (I:=I) δ σ σ') :
         exact hbaδ
 
       exact h.2.1 y j i hyσ hjσ hi hyiδ hjiδ
-
 
 theorem order_independence_of_counts : ∀ δ σ σ' : S,
   isBij (I:=I) δ σ σ' → isNonEmpty (I:= I) σ →
@@ -446,7 +442,6 @@ theorem bar_subset_bar_succ :
   constructor
   · exact hx_bounds.1
   · exact le_trans hx_bounds.2 (le_of_lt (I4 k))
-
 
 theorem predecessor_in_bar :
  ∀k:I, isN k → ∀j:I, j ∈ bar k → j ≠ 1 →
@@ -1082,7 +1077,7 @@ theorem least_element_principle_in_bar :
     rw [ha_eq_sc, hb_eq_sc]
   exact hab_ne hab
 
-theorem induction_isN :
+theorem induction_in_N :
   ∀ P : I → Prop, P 1 → (∀ i : I, P i → P (s i)) →
   ∀ n : I, isN n → P n := by
   intro P h1 hs n hn
