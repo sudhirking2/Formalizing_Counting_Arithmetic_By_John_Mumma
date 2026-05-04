@@ -1140,4 +1140,153 @@ theorem induction_in_N :
       exact hs i hiP
     exact hj_notP hjP
 
+theorem induction_in_N_standard :
+  ∀ P : I → Prop,
+    P 1 →
+    (∀ i : I, isN i → P i → P (s i)) →
+    ∀ n : I, isN n → P n := by
+  intro P h1 hs n hn
+  have hQ :
+      (fun i : I => isN i ∧ P i) n := by
+    exact induction_in_N
+      (I := I) (S := S)
+      (fun i : I => isN i ∧ P i)
+      ⟨I9.1, h1⟩
+      (by
+        intro i hi
+        exact ⟨I9.2 i hi.1, hs i hi.1 hi.2⟩)
+      n hn
+  exact hQ.2
+
+theorem isN_of_mem_bar :
+  ∀ n : I, isN n → ∀ i : I, i ∈ bar n → isN i := by
+  intro n hn i hi
+  classical
+  by_contra hni
+
+  let Bad : S := (S6 (fun x => ¬ isN x) (bar n)).1
+
+  have Bad_spec :
+      ∀ x : I, x ∈ Bad ↔ x ∈ bar n ∧ ¬ isN x := by
+    intro x
+    exact (S6 (fun x => ¬ isN x) (bar n)).2 x
+
+  have hBad_sub : Bad ⊆₀ bar n := by
+    intro x hx
+    exact ((Bad_spec x).mp hx).1
+
+  have hBad_inhabited : isInhabited (I := I) Bad := by
+    exact ⟨i, (Bad_spec i).mpr ⟨hi, hni⟩⟩
+
+  rcases least_element_principle_in_bar
+      (I := I) (S := S) n hn Bad hBad_sub hBad_inhabited with
+    ⟨j, hjFirst⟩
+
+  unfold isFirst at hjFirst
+
+  have hjBad : j ∈ Bad := hjFirst.1
+  have hjLeast : ∀ x : I, x ∈ Bad → j ≤ x := hjFirst.2
+
+  have hj_data : j ∈ bar n ∧ ¬ isN j := (Bad_spec j).mp hjBad
+  have hj_bar : j ∈ bar n := hj_data.1
+  have hj_notN : ¬ isN j := hj_data.2
+
+  by_cases hj_one : j = 1
+  · rw [hj_one] at hj_notN
+    exact hj_notN I9.1
+
+  · rcases predecessor_in_bar
+        (I := I) (S := S) n hn j hj_bar hj_one with
+      ⟨p, hpPred, _hpUnique⟩
+
+    have hp_bar : p ∈ bar n := hpPred.1
+    have hspj : s p = j := hpPred.2
+
+    have hpN : isN p := by
+      by_contra hp_notN
+      have hpBad : p ∈ Bad := (Bad_spec p).mpr ⟨hp_bar, hp_notN⟩
+      have hj_le_p : j ≤ p := hjLeast p hpBad
+      have hp_lt_j : p < j := by
+        rw [← hspj]
+        exact I4 p
+      exact not_lt_of_ge hj_le_p hp_lt_j
+
+    have hjN : isN j := by
+      rw [← hspj]
+      exact I9.2 p hpN
+
+    exact hj_notN hjN
+
+theorem alt_proof_induction_in_N_standard :
+  ∀ P : I → Prop,
+    P 1 →
+    (∀ i : I, isN i → P i → P (s i)) →
+    ∀ n : I, isN n → P n := by
+  intro P h1 hs n hn
+  classical
+  by_contra hnP
+
+  let Bad : S := (S6 (fun i => ¬ P i) (bar n)).1
+
+  have Bad_spec :
+      ∀ i : I, i ∈ Bad ↔ i ∈ bar n ∧ ¬ P i := by
+    intro i
+    exact (S6 (fun i => ¬ P i) (bar n)).2 i
+
+  have hn_bar : n ∈ bar n := by
+    apply (S2 n hn n).mpr
+    constructor
+    · exact (I10 n 1 1 hn).1
+    · rfl
+
+  have hBad_sub : Bad ⊆₀ bar n := by
+    intro i hi
+    exact ((Bad_spec i).mp hi).1
+
+  have hBad_inhabited : isInhabited (I := I) Bad := by
+    exact ⟨n, (Bad_spec n).mpr ⟨hn_bar, hnP⟩⟩
+
+  rcases least_element_principle_in_bar
+      (I := I) (S := S) n hn Bad hBad_sub hBad_inhabited with
+    ⟨j, hjFirst⟩
+
+  unfold isFirst at hjFirst
+
+  have hjBad : j ∈ Bad := hjFirst.1
+  have hjLeast : ∀ i : I, i ∈ Bad → j ≤ i := hjFirst.2
+
+  have hj_data : j ∈ bar n ∧ ¬ P j := (Bad_spec j).mp hjBad
+  have hj_bar : j ∈ bar n := hj_data.1
+  have hj_notP : ¬ P j := hj_data.2
+
+  by_cases hj_one : j = 1
+  · rw [hj_one] at hj_notP
+    exact hj_notP h1
+
+  · rcases predecessor_in_bar
+        (I := I) (S := S) n hn j hj_bar hj_one with
+      ⟨i, hiPred, _hiUnique⟩
+
+    have hi_bar : i ∈ bar n := hiPred.1
+    have hsi : s i = j := hiPred.2
+
+    have hiN : isN i :=
+      isN_of_mem_bar (I := I) (S := S) n hn i hi_bar
+
+    have hiP : P i := by
+      by_contra hi_notP
+      have hiBad : i ∈ Bad := (Bad_spec i).mpr ⟨hi_bar, hi_notP⟩
+      have hji : j ≤ i := hjLeast i hiBad
+      have hij : i < j := by
+        rw [← hsi]
+        exact I4 i
+      exact not_lt_of_ge hji hij
+
+    have hjP : P j := by
+      rw [← hsi]
+      exact hs i hiN hiP
+
+    exact hj_notP hjP
+
+
 end Counting_Arithmetic
