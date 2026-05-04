@@ -1141,10 +1141,8 @@ theorem induction_in_N :
     exact hj_notP hjP
 
 theorem induction_in_N_standard :
-  ∀ P : I → Prop,
-    P 1 →
-    (∀ i : I, isN i → P i → P (s i)) →
-    ∀ n : I, isN n → P n := by
+  ∀ P : I → Prop, P 1 → (∀ i : I, isN i → P i → P (s i)) →
+  ∀ n : I, isN n → P n := by
   intro P h1 hs n hn
   have hQ :
       (fun i : I => isN i ∧ P i) n := by
