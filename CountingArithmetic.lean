@@ -1,5 +1,5 @@
 -- Author: Sudhir Murthy
--- Acknowledgements: I thank Eric Reck for his encouragement in this project. I would also like to thank John Mumma for his talk on Counting Arithmetic and his permission to attempt to formalize his theory in Lean4.
+-- Acknowledgements: I thank Erich Reck for his encouragement in this project. I would also like to thank John Mumma for his talk on Counting Arithmetic and his permission to attempt to formalize his theory in Lean4.
 import Mathlib
 --set_option trace.Meta.synthInstance true
 
