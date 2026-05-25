@@ -1,5 +1,5 @@
 -- Author: Sudhir Murthy
--- Acknowledgements: I thank Erich Reck for his encouragement in this project. I would also like to thank John Mumma for his talk on Counting Arithmetic and his permission to attempt to formalize his theory in Lean4.
+-- Acknowledgements: I thank Eric Reck for his encouragement in this project. I would also like to thank John Mumma for his talk on Counting Arithmetic and his permission to attempt to formalize his theory in Lean4.
 import Mathlib
 --set_option trace.Meta.synthInstance true
 
@@ -65,7 +65,11 @@ class CountingArithmetic (I S : Type u)
     ∃ i j k : I, i ≠ j ∧ pr i k ∈ δ ∧ pr j k ∈ δ
 
 
-variable {I S : Type u} [CountingArithmetic I S]
+variable {I S : Type u} [CountingArithmetic I S] (P Q : Prop) (i :I)
+
+
+
+
 local notation "s" => CountingArithmetic.s (I := I) (S := S)
 local notation "pr" => CountingArithmetic.pr (I := I) (S := S)
 local notation "⟪" i ", " j "⟫" => pr i j
@@ -96,10 +100,13 @@ lemma InitialSegment_spec (σ : S) (j : I) :
 ∀ i : I, i ∈ InitialSegment σ j ↔ i ∈ σ ∧ i ≤ j :=
   (S6 (fun i => i ≤ j) σ).2
 
+
+
+
 def EmptyCollection :=
   (S6 (fun _ => False) (bar 1)).1
 local notation "∅" => EmptyCollection (I := I) (S := S)
-lemma EmptyCollection_spec : ∀ i : I, i ∉ ∅ := by
+def EmptyCollection_spec : ∀ i : I, i ∉ ∅ := by
   intro i hi
   have h := (S6 (fun i => False) (bar 1)).2 i
   have h := h.mp hi
@@ -539,7 +546,9 @@ theorem predecessor_in_bar :
                   apply (S2 (s k) hsk 1).mpr
                   constructor
                   · rfl
-                  · exact (I10 (s k) 1 1 hsk).1
+                  · exact le_trans
+                        (le_trans ((S2 k hk j).mp hj).1 ((S2 k hk j).mp hj).2)
+                        (le_of_lt (I4 k))
                 · exact ((S2 k hk j).mp hj).1
 
               · apply (δ_spec ⟪i, 1⟫).mpr
@@ -552,7 +561,8 @@ theorem predecessor_in_bar :
                     apply (S2 (s k) hsk 1).mpr
                     constructor
                     · rfl
-                    · exact (I10 (s k) 1 1 hsk).1
+                    · have hj_bounds : 1 ≤ j ∧ j ≤ k := (S2 k hk j).mp hj
+                      exact le_trans (le_trans hj_bounds.1 hj_bounds.2) (le_of_lt (I4 k))
                   · exact ((S2 k hk j).mp hj).1
                 · right
                   left
@@ -973,7 +983,12 @@ theorem least_element_principle_in_bar :
   have hkρ : k ∈ ρ := by
     apply (ρ_spec k).mpr
     constructor
-    · exact bar_subset_bar_succ (I := I) (S := S) k hk k ((S2 k hk k).mpr ⟨(I10 k 1 1 hk).1, le_rfl⟩)
+    · have hw_bar_k : w ∈ bar k := hsub w hwσ
+      have hw_bounds : 1 ≤ w ∧ w ≤ k := (S2 k hk w).mp hw_bar_k
+      have hk_bar_k : k ∈ bar k := by
+        apply (S2 k hk k).mpr
+        exact ⟨le_trans hw_bounds.1 hw_bounds.2, le_rfl⟩
+      exact bar_subset_bar_succ (I := I) (S := S) k hk k hk_bar_k
     · refine ⟨w, hwσ, ?_⟩
       exact ((S2 k hk w).mp (hsub w hwσ)).2
   have hskρ : s k ∈ ρ := by
@@ -981,7 +996,9 @@ theorem least_element_principle_in_bar :
     constructor
     · have hsk : isN (s k) := I9.2 k hk
       apply (S2 (s k) hsk (s k)).mpr
-      exact ⟨(I10 (s k) 1 1 hsk).1, le_rfl⟩
+      have hw_bar_k : w ∈ bar k := hsub w hwσ
+      have hw_bounds : 1 ≤ w ∧ w ≤ k := (S2 k hk w).mp hw_bar_k
+      exact ⟨le_trans (le_trans hw_bounds.1 hw_bounds.2) (le_of_lt (I4 k)), le_rfl⟩
     · refine ⟨w, hwσ, ?_⟩
       exact le_trans ((S2 k hk w).mp (hsub w hwσ)).2 (le_of_lt (I4 k))
   have hnext : isNext (I := I) k (s k) ρ := by
@@ -1141,8 +1158,10 @@ theorem induction_in_N :
     exact hj_notP hjP
 
 theorem induction_in_N_standard :
-  ∀ P : I → Prop, P 1 → (∀ i : I, isN i → P i → P (s i)) →
-  ∀ n : I, isN n → P n := by
+  ∀ P : I → Prop,
+    P 1 →
+    (∀ i : I, isN i → P i → P (s i)) →
+    ∀ n : I, isN n → P n := by
   intro P h1 hs n hn
   have hQ :
       (fun i : I => isN i ∧ P i) n := by
